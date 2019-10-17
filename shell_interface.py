@@ -4,6 +4,8 @@ import readchar
 import os
 import time
 import datetime
+import random
+random.seed(time.time())
 
 class shell:
     def __init__(self, ini_board=None):
@@ -93,7 +95,7 @@ class shell:
                 self.x_player = human_player(False)
                 break
             elif key == "4":
-                self.o_player = ai_player(True)
+                self.o_player = ai_player(True, 0.5)
                 self.x_player = ai_player(False)
                 break
 
@@ -163,17 +165,41 @@ class human_player(player):
                 return 1
 
 class ai_player(player):
-    def __init__(self, is_o, strength = 1):
+    def __init__(self, is_o, strength = 1.):
         super().__init__(is_o)
         self.name = "ai   "
-        self.random_prob = 1 - strength
+        self.strength = strength
         self.engine = search.absearch()
+        self.MID_POS = [(1,1)]
+        self.CORNER_POS = [(0,0), (0,2), (2,0), (2,2)]
+        self.EDGE_POS = [(0,1), (1,0), (1,2), (2,1)]
 
     def get_strategy(self, board):
         time_start = time.time()
         time.sleep(0.5)
-        dest = self.engine.get_strategy(board)
+        if random.random() <= self.strength:
+            if board.current_round == 0:
+                dest = self._start_strategy()
+            else:
+                dest = self.engine.get_strategy(board)
+        else:
+            dest = self._get_random_strategy(board)
         self.elaspled_time += time.time() - time_start
+        return dest
+
+    def _start_strategy(self, mid=0.5, corner=0.4, edge=0.1):
+        rd = random.random()
+        if rd <= mid:
+            dest = random.choice(self.MID_POS)
+        elif rd <= mid+corner:
+            dest = random.choice(self.CORNER_POS)
+        else:
+            dest = random.choice(self.EDGE_POS)
+        return dest
+
+    def _get_random_strategy(self, board):
+        possible_moves = board.find_all_moves()
+        dest = random.choice(possible_moves)
         return dest
 
 if __name__ == "__main__":
