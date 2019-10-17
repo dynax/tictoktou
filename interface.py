@@ -1,6 +1,9 @@
 import board
+import search
 import readchar
 import os
+import time
+import datetime
 
 class shell:
     def __init__(self, ini_board=None):
@@ -15,10 +18,12 @@ class shell:
         COLNAMES = "123"
         ROWNAMES = ["A", "B", "C"]
         os.system("clear")
+        display  = "\nO player: " + self.o_player.name + "   " + self.o_player.get_elapsed_time()
+        display += "\nX player: " + self.x_player.name + "   " + self.x_player.get_elapsed_time()
         if True == self.board.is_o:
-            display = "\nOOO "
+            display += "\n===OOO=== "
         else:
-            display = "\nXXX "
+            display += "\n===XXX=== "
         display += " turn.\n\n"
         display += " " * NUM_SPACE + "  "+COLNAMES+"\n"
         for i in range(3):
@@ -37,7 +42,6 @@ class shell:
 
     def main(self):
         game_status = 2
-
         while self.board.current_round < 9:
             self.display_board()
             self._display_control()
@@ -45,17 +49,21 @@ class shell:
                 dest = self.o_player.get_strategy(self.board)
             else:
                 dest = self.x_player.get_strategy(self.board)
-            if None != dest:
+            if dest == 0:
+                self.board.revert_move()
+                if self.board.current_round>0:
+                    self.board.revert_move()
+            elif dest == 1:
+                game_status = 3
+                break
+            else: 
                 self.board.move(dest)
                 if True == self.board.is_win():
                     if False == self.board.is_o:
                         game_status = 0
                     else:
                         game_status = 1
-                    break
-            else:
-                self.board.revert_move()
-        # endwhile            
+                    break          
         self._ending(game_status)
 
     def _welcome(self):
@@ -63,12 +71,31 @@ class shell:
         display  = "\n\n\n"
         display += "**************************************************\n" 
         display += "               Welcome to TicTokTou!              \n"
-        display += "**************************************************\n"
+        display += "**************************************************\n\n"
+        display += "1: human play O and ai play X\n"
+        display += "2: ai play O and human play X\n"
+        display += "3: human play both O and X\n"
+        display += "4: ai play both O and X\n"
         print(display)
         # set players
-        self.o_player = human_player(True)
-        self.x_player = human_player(False)
-        readchar.readkey()
+        while True:
+            key = readchar.readkey().lower()
+            if key == "1":
+                self.o_player = human_player(True)
+                self.x_player = ai_player(False)
+                break
+            elif key == "2":
+                self.o_player = ai_player(True)
+                self.x_player = human_player(False)
+                break
+            elif key == "3":
+                self.o_player = human_player(True)
+                self.x_player = human_player(False)
+                break
+            elif key == "4":
+                self.o_player = ai_player(True)
+                self.x_player = ai_player(False)
+                break
 
     def _display_control(self):
         display  = "Use one of the following keys to put a piece on: \n"
@@ -76,6 +103,7 @@ class shell:
         display += "   JKL\n"
         display += "   M,.\n"
         display += "Revert with R.\n"
+        display += "Quit with Q.\n"
         print(display) 
 
     def _ending(self, game_status):
@@ -84,21 +112,27 @@ class shell:
             print("Draw game. ")
         elif 1 == game_status:
             print("X wins. ")
+        elif 3 == game_status:
+            print("User shut down. ")
         else:
             print("O wins. ")
-
 
 
 class player:
     def __init__(self, is_o):
         self.is_o = is_o
+        self.elaspled_time = 0.
 
     def get_strategy(self, board):
         raise AttributeError("get_strategy method has not implemented in this player object. ")
 
+    def get_elapsed_time(self):
+        return str(datetime.timedelta(seconds=int(self.elaspled_time)))
+
 class human_player(player):
     def __init__(self, is_o):
         super().__init__(is_o)
+        self.name = "human"
         self.key_map = dict()
         self.key_map["u"] = (0,0)
         self.key_map["i"] = (0,1)
@@ -114,23 +148,33 @@ class human_player(player):
         self.valid_keys = self.key_map.keys()
 
     def get_strategy(self, board):
+        time_start = time.time()
         valid_moves = board.find_all_moves()
         while True:
             key = readchar.readkey().lower()
             if key in self.valid_keys and self.key_map[key] in valid_moves:
+                self.elaspled_time += time.time() - time_start
                 return self.key_map[key]
             if key == 'r' and board.current_round > 0: 
-                return None
+                self.elaspled_time += time.time() - time_start
+                return 0
+            if key == 'q':
+                self.elaspled_time += time.time() - time_start
+                return 1
 
 class ai_player(player):
     def __init__(self, is_o, strength = 1):
         super().__init__(is_o)
+        self.name = "ai   "
         self.random_prob = 1 - strength
+        self.engine = search.absearch()
 
     def get_strategy(self, board):
-        pass
-
-  
+        time_start = time.time()
+        time.sleep(0.5)
+        dest = self.engine.get_strategy(board)
+        self.elaspled_time += time.time() - time_start
+        return dest
 
 if __name__ == "__main__":
     game = shell()
