@@ -14,12 +14,15 @@ class board:
         self.x = np.zeros([3,3])
         self.current_round = 0
         self.is_o = True
+        self.status = 0 # 0 runing, 1: o won, 2: x won, 3: draw
 
     def move(self, dest):
         try: 
             assert isinstance(dest, tuple)
         except:
             dest = tuple(dest)
+        if False == self.is_move_valid(dest):
+            return 1
         if True == self.is_o:
             self.o[dest] = 1
         else:
@@ -27,6 +30,10 @@ class board:
         self.moves[self.current_round] = dest
         self.current_round += 1
         self.is_o = not self.is_o
+        return 0
+
+    def is_move_valid(self, dest):
+        return not (self.o[dest] and self.x[dest])
 
     def revert_move(self):
         try:
@@ -55,6 +62,24 @@ class board:
         for m, n in self.check[last_move]:
             res += current_board[m] * current_board[n]
         return res
+
+    def is_end(self):
+        # 0: runing, 1: o won, 2 x won, 3: draw
+        if True == self.is_win():
+            if False == self.is_o:
+                self.status = 1
+                return 1
+            else:
+                self.status = 2
+                return 2 # 
+        else:
+            if self.current_round == 9:
+                self.status = 3
+                return 3 # draw 
+            else:
+                return 0 # not end
+    def get_last_move(self):
+        return self.moves[self.current_round-1]
 
     # to speed up the is_win, manually write all the possible cases
     def _set_aug_functions(self):

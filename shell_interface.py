@@ -95,7 +95,7 @@ class shell:
                 self.x_player = human_player(False)
                 break
             elif key == "4":
-                self.o_player = ai_player(True, 0.5)
+                self.o_player = ai_player(True)
                 self.x_player = ai_player(False)
                 break
 
