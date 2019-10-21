@@ -275,11 +275,6 @@ class BoardPanel(wx.Panel):
                 self.piece_bmp[i][j] = wx.StaticBitmap(self, -1, self.BLANK_BMP, (90*i, 90*j))
                 self.piece_bmp[i][j].Hide()
 
-    def restart_piece(self):
-        for i in range(3):
-            for j in range(3):
-                self.update_piece((i, j), 0, 0)
-
     def _load_images(self, dir_path="dat"):
         self.BOARD_BMP = wx.Bitmap(os.path.join(dir_path, "board.bmp"))
         self.O_BMP = wx.Bitmap(os.path.join(dir_path, "O.bmp"))

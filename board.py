@@ -33,7 +33,7 @@ class board:
         return 0
 
     def is_move_valid(self, dest):
-        return not (self.o[dest] and self.x[dest])
+        return not (self.o[dest] or self.x[dest])
 
     def revert_move(self):
         try:
